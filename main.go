@@ -14,7 +14,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os/exec"
@@ -126,37 +125,37 @@ func main() {
 	sort.Ints(reuseDeltaA)
 	sort.Ints(reuseDeltaD)
 
-	fmt.Printf("Please add the following output (including the quotes) to https://golang.org/issue/22990\n\n")
-	fmt.Printf("```\n")
-	defer fmt.Printf("```\n")
+	log.Printf("Please add the following output (including the quotes) to https://golang.org/issue/22990\n\n")
+	log.Printf("```\n")
+	defer log.Printf("```\n")
 
-	fmt.Printf("cache age: %.2f days\n", float64(lastTime-firstTime)/86400)
+	log.Printf("cache age: %.2f days\n", float64(lastTime-firstTime)/86400)
 	printCache("action", totalA, totalReusedA, reuseA, reuseDeltaA)
 	printCache("data", totalD, totalReusedD, reuseD, reuseDeltaD)
 }
 
 func printCache(name string, total, totalReused int64, reuse, reuseDelta []int) {
-	fmt.Printf("%s cache: %d bytes, %d reused\n", name, total, totalReused)
+	log.Printf("%s cache: %d bytes, %d reused\n", name, total, totalReused)
 	if len(reuse) == 0 {
-		fmt.Printf("\tno reuse\n")
+		log.Printf("\tno reuse\n")
 	} else {
-		fmt.Printf("\treuse time percentiles\n")
+		log.Printf("\treuse time percentiles\n")
 		for i := 10; i <= 90; i += 10 {
 			j := len(reuse) * i / 100
-			fmt.Printf("\t\t%d%% %.2f days\n", i, float64(reuse[j])/86400)
+			log.Printf("\t\t%d%% %.2f days\n", i, float64(reuse[j])/86400)
 		}
-		fmt.Printf("\t\t95%% %.2f days\n", float64(reuse[len(reuse)*95/100])/86400)
-		fmt.Printf("\t\t99%% %.2f days\n", float64(reuse[len(reuse)*99/100])/86400)
-		fmt.Printf("\t\t99.9%% %.2f days\n", float64(reuse[len(reuse)*999/1000])/86400)
-		fmt.Printf("\t\tmax %.2f days\n", float64(reuse[len(reuse)-1])/86400)
-		fmt.Printf("\treuse time delta percentiles\n")
+		log.Printf("\t\t95%% %.2f days\n", float64(reuse[len(reuse)*95/100])/86400)
+		log.Printf("\t\t99%% %.2f days\n", float64(reuse[len(reuse)*99/100])/86400)
+		log.Printf("\t\t99.9%% %.2f days\n", float64(reuse[len(reuse)*999/1000])/86400)
+		log.Printf("\t\tmax %.2f days\n", float64(reuse[len(reuse)-1])/86400)
+		log.Printf("\treuse time delta percentiles\n")
 		for i := 10; i <= 90; i += 10 {
 			j := len(reuseDelta) * i / 100
-			fmt.Printf("\t\t%d%% %.2f days\n", i, float64(reuseDelta[j])/86400)
+			log.Printf("\t\t%d%% %.2f days\n", i, float64(reuseDelta[j])/86400)
 		}
-		fmt.Printf("\t\t95%% %.2f days\n", float64(reuseDelta[len(reuse)*95/100])/86400)
-		fmt.Printf("\t\t99%% %.2f days\n", float64(reuseDelta[len(reuse)*99/100])/86400)
-		fmt.Printf("\t\t99.9%% %.2f days\n", float64(reuseDelta[len(reuse)*999/1000])/86400)
-		fmt.Printf("\t\tmax %.2f days\n", float64(reuseDelta[len(reuse)-1])/86400)
+		log.Printf("\t\t95%% %.2f days\n", float64(reuseDelta[len(reuse)*95/100])/86400)
+		log.Printf("\t\t99%% %.2f days\n", float64(reuseDelta[len(reuse)*99/100])/86400)
+		log.Printf("\t\t99.9%% %.2f days\n", float64(reuseDelta[len(reuse)*999/1000])/86400)
+		log.Printf("\t\tmax %.2f days\n", float64(reuseDelta[len(reuse)-1])/86400)
 	}
 }
