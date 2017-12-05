@@ -25,10 +25,11 @@ import (
 )
 
 type entry struct {
-	created int64
-	size    int64
-	reused  bool
-	data    *entry
+	created    int64
+	lastReused int64
+	size       int64
+	reused     bool
+	data       *entry
 }
 
 func main() {
@@ -54,7 +55,7 @@ func main() {
 
 	var totalA, totalReusedA, totalD, totalReusedD int64
 
-	var reuseA, reuseD []int
+	var reuseA, reuseD, reuseDeltaA, reuseDeltaD []int
 	var firstTime, lastTime int64
 	cache := make(map[string]*entry)
 	for _, line := range bytes.Split(data, []byte("\n")) {
@@ -102,32 +103,39 @@ func main() {
 			if e == nil {
 				continue
 			}
-			if !e.reused {
-				e.reused = true
+			if e.lastReused == 0 {
 				totalReusedA += e.size
+				e.lastReused = e.created
 			}
-			if !e.data.reused {
-				e.data.reused = true
+			if e.data.lastReused == 0 {
 				totalReusedD += e.data.size
+				e.data.lastReused = e.data.created
 			}
 			reuseA = append(reuseA, int(t-e.created))
 			reuseD = append(reuseD, int(t-e.data.created))
+			reuseDeltaA = append(reuseDeltaA, int(t-e.lastReused))
+			reuseDeltaD = append(reuseDeltaD, int(t-e.data.lastReused))
+
+			e.lastReused = t
+			e.data.lastReused = t
 		}
 	}
 
 	sort.Ints(reuseA)
 	sort.Ints(reuseD)
+	sort.Ints(reuseDeltaA)
+	sort.Ints(reuseDeltaD)
 
 	fmt.Printf("Please add the following output (including the quotes) to https://golang.org/issue/22990\n\n")
 	fmt.Printf("```\n")
 	defer fmt.Printf("```\n")
 
 	fmt.Printf("cache age: %.2f days\n", float64(lastTime-firstTime)/86400)
-	printCache("action", totalA, totalReusedA, reuseA)
-	printCache("data", totalD, totalReusedD, reuseD)
+	printCache("action", totalA, totalReusedA, reuseA, reuseDeltaA)
+	printCache("data", totalD, totalReusedD, reuseD, reuseDeltaD)
 }
 
-func printCache(name string, total, totalReused int64, reuse []int) {
+func printCache(name string, total, totalReused int64, reuse, reuseDelta []int) {
 	fmt.Printf("%s cache: %d bytes, %d reused\n", name, total, totalReused)
 	if len(reuse) == 0 {
 		fmt.Printf("\tno reuse\n")
@@ -135,11 +143,20 @@ func printCache(name string, total, totalReused int64, reuse []int) {
 		fmt.Printf("\treuse time percentiles\n")
 		for i := 10; i <= 90; i += 10 {
 			j := len(reuse) * i / 100
-			fmt.Printf("\t%d%% %.2f days\n", i, float64(reuse[j])/86400)
+			fmt.Printf("\t\t%d%% %.2f days\n", i, float64(reuse[j])/86400)
 		}
-		fmt.Printf("\t95%% %.2f days\n", float64(reuse[len(reuse)*95/100])/86400)
-		fmt.Printf("\t99%% %.2f days\n", float64(reuse[len(reuse)*99/100])/86400)
-		fmt.Printf("\t99.9%% %.2f days\n", float64(reuse[len(reuse)*999/1000])/86400)
-		fmt.Printf("\tmax %.2f days\n", float64(reuse[len(reuse)-1])/86400)
+		fmt.Printf("\t\t95%% %.2f days\n", float64(reuse[len(reuse)*95/100])/86400)
+		fmt.Printf("\t\t99%% %.2f days\n", float64(reuse[len(reuse)*99/100])/86400)
+		fmt.Printf("\t\t99.9%% %.2f days\n", float64(reuse[len(reuse)*999/1000])/86400)
+		fmt.Printf("\t\tmax %.2f days\n", float64(reuse[len(reuse)-1])/86400)
+		fmt.Printf("\treuse time delta percentiles\n")
+		for i := 10; i <= 90; i += 10 {
+			j := len(reuseDelta) * i / 100
+			fmt.Printf("\t\t%d%% %.2f days\n", i, float64(reuseDelta[j])/86400)
+		}
+		fmt.Printf("\t\t95%% %.2f days\n", float64(reuseDelta[len(reuse)*95/100])/86400)
+		fmt.Printf("\t\t99%% %.2f days\n", float64(reuseDelta[len(reuse)*99/100])/86400)
+		fmt.Printf("\t\t99.9%% %.2f days\n", float64(reuseDelta[len(reuse)*999/1000])/86400)
+		fmt.Printf("\t\tmax %.2f days\n", float64(reuseDelta[len(reuse)-1])/86400)
 	}
 }
